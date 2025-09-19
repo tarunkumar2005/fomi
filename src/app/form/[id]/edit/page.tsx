@@ -11,8 +11,20 @@ export default function FormBuilder() {
   const params = useParams<{ id: string }>();
   const [sidebarWidth, setSidebarWidth] = useState(25);
   const [isDragging, setIsDragging] = useState(false);
-  
-  const { isSaving, lastSaved } = useFormSave();
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  const handleSaveStateChange = (saving: boolean, saved: Date | null) => {
+    setIsSaving(saving);
+    setLastSaved(saved);
+  };
+
+  const handleSave = async () => {
+    // This will trigger a manual save - the actual form data will be handled by FormCanvas
+    // Since FormCanvas manages the form state, we'll trigger a save event
+    const event = new CustomEvent('manualSave');
+    window.dispatchEvent(event);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -46,6 +58,7 @@ export default function FormBuilder() {
         isSaving={isSaving}
         lastSaved={lastSaved}
         onPreview={handlePreview}
+        onSave={handleSave}
       />
       
       <div className="flex-1 flex min-h-0">
@@ -53,7 +66,10 @@ export default function FormBuilder() {
           className="flex-1 overflow-auto"
           style={{ width: `${100 - sidebarWidth}%` }}
         >
-          <FormCanvas formId={params.id} />
+          <FormCanvas 
+            formId={params.id} 
+            onSaveStateChange={handleSaveStateChange}
+          />
         </div>
 
         <div 

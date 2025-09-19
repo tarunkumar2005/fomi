@@ -2,95 +2,153 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TextareaField, FieldBuilderProps, FieldPreviewProps } from "@/types/form";
 
-interface ParagraphField {
-  id: string;
-  type: "textarea";
-  question: string;
-  required: boolean;
-  placeholder?: string;
-  rows?: number;
-}
-
-interface ParagraphBuilderProps {
-  field: ParagraphField;
-  onUpdate: (updates: Partial<ParagraphField>) => void;
-}
-
-interface ParagraphPreviewProps {
-  field: ParagraphField;
-  value?: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-  error?: string;
-}
-
-export function ParagraphBuilder({ field, onUpdate }: ParagraphBuilderProps) {
-  const handlePlaceholderChange = (placeholder: string) => {
-    onUpdate({ placeholder: placeholder || undefined });
-  };
-
-  const handleRowsChange = (rows: number) => {
-    const validRows = Math.max(2, Math.min(10, rows));
-    onUpdate({ rows: validRows });
-  };
-
+export function ParagraphBuilder({ field, onUpdate }: FieldBuilderProps<TextareaField>) {
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="min-w-0 flex-shrink-0">Placeholder:</span>
-          <Input
-            value={field.placeholder || ""}
-            onChange={(e) => handlePlaceholderChange(e.target.value)}
-            placeholder="Enter placeholder text"
-            className="text-xs h-8 flex-1"
-          />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="min-w-0 flex-shrink-0">Rows:</span>
-          <Input
-            type="number"
-            value={field.rows || 3}
-            onChange={(e) => handleRowsChange(parseInt(e.target.value) || 3)}
-            min="2"
-            max="10"
-            className="text-xs h-8 w-16"
-          />
-        </div>
-      </div>
-      
-      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-500 mb-2">Preview:</p>
-        <ParagraphPreview field={field} disabled />
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            Configuration
+            <Badge variant="secondary" className="text-xs">
+              textarea
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="placeholder">Placeholder Text</Label>
+            <Input
+              id="placeholder"
+              value={field.placeholder || ""}
+              onChange={(e) => onUpdate({ placeholder: e.target.value || undefined })}
+              placeholder="Enter placeholder text"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="rows" className="text-xs text-muted-foreground">
+                Rows
+              </Label>
+              <Input
+                id="rows"
+                type="number"
+                value={field.rows || 3}
+                onChange={(e) => onUpdate({ 
+                  rows: parseInt(e.target.value) || 3 
+                })}
+                min="2"
+                max="10"
+                className="h-8"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="minLength" className="text-xs text-muted-foreground">
+                Min Length
+              </Label>
+              <Input
+                id="minLength"
+                type="number"
+                value={field.minLength || ""}
+                onChange={(e) => onUpdate({ 
+                  minLength: e.target.value ? parseInt(e.target.value) : undefined 
+                })}
+                placeholder="0"
+                className="h-8"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="maxLength" className="text-xs text-muted-foreground">
+                Max Length
+              </Label>
+              <Input
+                id="maxLength"
+                type="number"
+                value={field.maxLength || ""}
+                onChange={(e) => onUpdate({ 
+                  maxLength: e.target.value ? parseInt(e.target.value) : undefined 
+                })}
+                placeholder="500"
+                className="h-8"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ParagraphPreview field={field} disabled />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-export function ParagraphPreview({ field, value, onChange, disabled = false, error }: ParagraphPreviewProps) {
-  const handleChange = (newValue: string) => {
-    onChange?.(newValue);
+export function ParagraphPreview({ 
+  field, 
+  value, 
+  onChange, 
+  disabled = false, 
+  error 
+}: FieldPreviewProps<TextareaField>) {
+  const validateInput = (inputValue: string): string | null => {
+    if (field.required && !inputValue.trim()) {
+      return "This field is required";
+    }
+
+    if (field.minLength && inputValue.length < field.minLength) {
+      return `Minimum ${field.minLength} characters required`;
+    }
+
+    if (field.maxLength && inputValue.length > field.maxLength) {
+      return `Maximum ${field.maxLength} characters allowed`;
+    }
+
+    return null;
   };
 
+  const inputError = error || (value ? validateInput(value) : null);
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Textarea
         value={value || ""}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={(e) => onChange?.(e.target.value)}
         placeholder={field.placeholder || "Long answer text"}
         disabled={disabled}
         required={field.required}
         rows={field.rows || 3}
-        className={`bg-white border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all duration-200 resize-none ${
-          error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
+        minLength={field.minLength}
+        maxLength={field.maxLength}
+        className={`resize-none transition-all duration-200 ${
+          inputError 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
+            : 'border-input focus:border-primary'
         }`}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${field.id}-error` : undefined}
+        aria-invalid={!!inputError}
       />
-      {error && (
-        <p id={`${field.id}-error`} className="text-xs text-red-500">
-          {error}
+      
+      {inputError && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <span className="w-1 h-1 bg-red-500 rounded-full" />
+          {inputError}
+        </p>
+      )}
+      
+      {field.maxLength && (
+        <p className="text-xs text-muted-foreground text-right">
+          {value?.length || 0}/{field.maxLength}
         </p>
       )}
     </div>

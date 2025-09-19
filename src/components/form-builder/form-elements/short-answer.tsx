@@ -1,92 +1,172 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TextField, FieldBuilderProps, FieldPreviewProps } from "@/types/form";
 
-interface ShortAnswerField {
-  id: string;
-  type: "text" | "email" | "phone";
-  question: string;
-  required: boolean;
-  placeholder?: string;
-}
-
-interface ShortAnswerBuilderProps {
-  field: ShortAnswerField;
-  onUpdate: (updates: Partial<ShortAnswerField>) => void;
-}
-
-interface ShortAnswerPreviewProps {
-  field: ShortAnswerField;
-  value?: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-  error?: string;
-}
-
-export function ShortAnswerBuilder({ field, onUpdate }: ShortAnswerBuilderProps) {
-  const handlePlaceholderChange = (placeholder: string) => {
-    onUpdate({ placeholder: placeholder || undefined });
-  };
-
+export function ShortAnswerBuilder({ field, onUpdate }: FieldBuilderProps<TextField>) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <span className="min-w-0 flex-shrink-0">Placeholder:</span>
-        <Input
-          value={field.placeholder || ""}
-          onChange={(e) => handlePlaceholderChange(e.target.value)}
-          placeholder="Enter placeholder text"
-          className="text-xs h-8 flex-1"
-        />
-      </div>
-      
-      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs text-gray-500 mb-2">Preview:</p>
-        <ShortAnswerPreview field={field} disabled />
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            Configuration
+            <Badge variant="secondary" className="text-xs">
+              {field.type.toLowerCase()}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="placeholder" className="text-sm">
+              Placeholder Text
+            </Label>
+            <Input
+              id="placeholder"
+              value={field.placeholder || ""}
+              onChange={(e) => onUpdate({ placeholder: e.target.value || undefined })}
+              placeholder="Enter placeholder text"
+              className="h-9"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="minLength" className="text-xs text-muted-foreground">
+                Min Length
+              </Label>
+              <Input
+                id="minLength"
+                type="number"
+                value={field.minLength || ""}
+                onChange={(e) => onUpdate({ 
+                  minLength: e.target.value ? parseInt(e.target.value) : undefined 
+                })}
+                placeholder="0"
+                className="h-8"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="maxLength" className="text-xs text-muted-foreground">
+                Max Length
+              </Label>
+              <Input
+                id="maxLength"
+                type="number"
+                value={field.maxLength || ""}
+                onChange={(e) => onUpdate({ 
+                  maxLength: e.target.value ? parseInt(e.target.value) : undefined 
+                })}
+                placeholder="100"
+                className="h-8"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ShortAnswerPreview field={field} disabled />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-export function ShortAnswerPreview({ field, value, onChange, disabled = false, error }: ShortAnswerPreviewProps) {
-  const handleChange = (newValue: string) => {
-    onChange?.(newValue);
-  };
-
+export function ShortAnswerPreview({ 
+  field, 
+  value, 
+  onChange, 
+  disabled = false, 
+  error 
+}: FieldPreviewProps<TextField>) {
   const getInputType = () => {
     switch (field.type) {
-      case "email": return "email";
-      case "phone": return "tel";
+      case "EMAIL": return "email";
+      case "PHONE": return "tel";
+      case "URL": return "url";
       default: return "text";
     }
   };
 
   const getDefaultPlaceholder = () => {
     switch (field.type) {
-      case "email": return "Enter email address";
-      case "phone": return "Enter phone number";
+      case "EMAIL": return "Enter email address";
+      case "PHONE": return "Enter phone number";
+      case "URL": return "Enter website URL";
       default: return "Short answer text";
     }
   };
 
+  const validateInput = (inputValue: string): string | null => {
+    if (field.required && !inputValue.trim()) {
+      return "This field is required";
+    }
+
+    if (field.minLength && inputValue.length < field.minLength) {
+      return `Minimum ${field.minLength} characters required`;
+    }
+
+    if (field.maxLength && inputValue.length > field.maxLength) {
+      return `Maximum ${field.maxLength} characters allowed`;
+    }
+
+    if (field.type === "EMAIL" && inputValue) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(inputValue)) {
+        return "Please enter a valid email address";
+      }
+    }
+
+    if (field.type === "URL" && inputValue) {
+      try {
+        new URL(inputValue);
+      } catch {
+        return "Please enter a valid URL";
+      }
+    }
+
+    return null;
+  };
+
+  const inputError = error || (value ? validateInput(value) : null);
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Input
         type={getInputType()}
         value={value || ""}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={(e) => onChange?.(e.target.value)}
         placeholder={field.placeholder || getDefaultPlaceholder()}
         disabled={disabled}
         required={field.required}
-        className={`bg-white border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all duration-200 ${
-          error ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
+        minLength={field.minLength}
+        maxLength={field.maxLength}
+        className={`transition-all duration-200 ${
+          inputError 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
+            : 'border-input focus:border-primary'
         }`}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${field.id}-error` : undefined}
+        aria-invalid={!!inputError}
       />
-      {error && (
-        <p id={`${field.id}-error`} className="text-xs text-red-500">
-          {error}
+      
+      {inputError && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <span className="w-1 h-1 bg-red-500 rounded-full" />
+          {inputError}
+        </p>
+      )}
+      
+      {field.maxLength && value && (
+        <p className="text-xs text-muted-foreground text-right">
+          {value.length}/{field.maxLength}
         </p>
       )}
     </div>

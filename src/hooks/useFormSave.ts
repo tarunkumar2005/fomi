@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/useSession";
 
 interface FormField {
   id: string;
-  type: "text" | "textarea" | "select" | "radio" | "checkbox" | "email" | "phone" | "number" | "rating" | "file" | "date" | "time";
+  type: "TEXT" | "TEXTAREA" | "SELECT" | "RADIO" | "CHECKBOX" | "EMAIL" | "PHONE" | "NUMBER" | "RATING" | "FILE" | "DATE" | "TIME";
   question: string;
   required: boolean;
   options?: string[];

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { GripVertical, MoreVertical, Trash2, Copy } from "lucide-react";
+import { GripVertical, MoreVertical, Trash2, Copy, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ShortAnswerBuilder } from "./form-elements/short-answer";
 import { ParagraphBuilder } from "./form-elements/paragraph";
 import { MultipleChoiceBuilder } from "./form-elements/multiple-choice";
@@ -13,7 +14,7 @@ import { DropdownBuilder } from "./form-elements/dropdown";
 
 interface FormField {
   id: string;
-  type: "text" | "textarea" | "select" | "radio" | "checkbox" | "email" | "phone" | "number" | "rating" | "file" | "date" | "time";
+  type: "TEXT" | "TEXTAREA" | "SELECT" | "RADIO" | "CHECKBOX" | "EMAIL" | "PHONE" | "NUMBER" | "RATING" | "FILE" | "DATE" | "TIME";
   question: string;
   required: boolean;
   options?: string[];
@@ -38,37 +39,39 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
   const [error, setError] = useState<string | null>(null);
 
   const getTypeColor = () => {
-    switch (field.type) {
-      case "text": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "textarea": return "bg-green-50 text-green-700 border-green-200";
-      case "select": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "radio": return "bg-orange-50 text-orange-700 border-orange-200";
-      case "checkbox": return "bg-pink-50 text-pink-700 border-pink-200";
-      case "email": return "bg-cyan-50 text-cyan-700 border-cyan-200";
-      case "phone": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "number": return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "rating": return "bg-amber-50 text-amber-700 border-amber-200";
-      case "file": return "bg-violet-50 text-violet-700 border-violet-200";
-      case "date": return "bg-rose-50 text-rose-700 border-rose-200";
-      case "time": return "bg-teal-50 text-teal-700 border-teal-200";
+    const normalizedType = field.type.toUpperCase();
+    switch (normalizedType) {
+      case "TEXT": return "bg-blue-50 text-blue-700 border-blue-200";
+      case "TEXTAREA": return "bg-green-50 text-green-700 border-green-200";
+      case "SELECT": return "bg-purple-50 text-purple-700 border-purple-200";
+      case "RADIO": return "bg-orange-50 text-orange-700 border-orange-200";
+      case "CHECKBOX": return "bg-pink-50 text-pink-700 border-pink-200";
+      case "EMAIL": return "bg-cyan-50 text-cyan-700 border-cyan-200";
+      case "PHONE": return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "NUMBER": return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "RATING": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "FILE": return "bg-violet-50 text-violet-700 border-violet-200";
+      case "DATE": return "bg-rose-50 text-rose-700 border-rose-200";
+      case "TIME": return "bg-teal-50 text-teal-700 border-teal-200";
       default: return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const getTypeName = () => {
-    switch (field.type) {
-      case "text": return "Short Answer";
-      case "textarea": return "Paragraph";
-      case "select": return "Dropdown";
-      case "radio": return "Multiple Choice";
-      case "checkbox": return "Checkboxes";
-      case "email": return "Email";
-      case "phone": return "Phone Number";
-      case "number": return "Number";
-      case "rating": return "Rating";
-      case "file": return "File Upload";
-      case "date": return "Date";
-      case "time": return "Time";
+    const normalizedType = field.type.toUpperCase();
+    switch (normalizedType) {
+      case "TEXT": return "Short Answer";
+      case "TEXTAREA": return "Paragraph";
+      case "SELECT": return "Dropdown";
+      case "RADIO": return "Multiple Choice";
+      case "CHECKBOX": return "Checkboxes";
+      case "EMAIL": return "Email";
+      case "PHONE": return "Phone Number";
+      case "NUMBER": return "Number";
+      case "RATING": return "Rating";
+      case "FILE": return "File Upload";
+      case "DATE": return "Date";
+      case "TIME": return "Time";
       default: return field.type;
     }
   };
@@ -84,89 +87,21 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
 
   const renderFieldBuilder = () => {
     try {
-      switch (field.type) {
-        case "text":
-          return (
-            <ShortAnswerBuilder 
-              field={field as any} 
-              onUpdate={onUpdate}
-            />
-          );
-        case "textarea":
-          return (
-            <ParagraphBuilder 
-              field={field as any} 
-              onUpdate={onUpdate}
-            />
-          );
-        case "select":
-          return (
-            <DropdownBuilder 
-              field={{ ...field, options: field.options || ["Option 1"] } as any} 
-              onUpdate={onUpdate}
-            />
-          );
-        case "radio":
-          return (
-            <MultipleChoiceBuilder 
-              field={{ ...field, options: field.options || ["Option 1"] } as any} 
-              onUpdate={onUpdate}
-            />
-          );
-        case "checkbox":
-          return (
-            <CheckboxesBuilder 
-              field={{ ...field, options: field.options || ["Option 1"] } as any} 
-              onUpdate={onUpdate}
-            />
-          );
-        case "email":
-          return (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span className="min-w-0 flex-shrink-0">Placeholder:</span>
-                <Input
-                  value={field.placeholder || ""}
-                  onChange={(e) => onUpdate({ placeholder: e.target.value || undefined })}
-                  placeholder="Enter email placeholder"
-                  className="text-xs h-8 flex-1"
-                />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                <Input
-                  type="email"
-                  placeholder={field.placeholder || "Enter email address"}
-                  disabled
-                  className="bg-white border-gray-300"
-                />
-              </div>
-            </div>
-          );
-        case "phone":
-          return (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span className="min-w-0 flex-shrink-0">Placeholder:</span>
-                <Input
-                  value={field.placeholder || ""}
-                  onChange={(e) => onUpdate({ placeholder: e.target.value || undefined })}
-                  placeholder="Enter phone placeholder"
-                  className="text-xs h-8 flex-1"
-                />
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-500 mb-2">Preview:</p>
-                <Input
-                  type="tel"
-                  placeholder={field.placeholder || "Enter phone number"}
-                  disabled
-                  className="bg-white border-gray-300"
-                />
-              </div>
-            </div>
-          );
-        case "number":
+      const normalizedType = field.type.toUpperCase();
+      switch (normalizedType) {
+        case "TEXT":
+        case "EMAIL":
+        case "PHONE":
+          return <ShortAnswerBuilder field={field} onUpdate={onUpdate} />;
+        case "TEXTAREA":
+          return <ParagraphBuilder field={field} onUpdate={onUpdate} />;
+        case "SELECT":
+          return <DropdownBuilder field={{ ...field, options: field.options || ["Option 1"] }} onUpdate={onUpdate} />;
+        case "RADIO":
+          return <MultipleChoiceBuilder field={{ ...field, options: field.options || ["Option 1"] }} onUpdate={onUpdate} />;
+        case "CHECKBOX":
+          return <CheckboxesBuilder field={{ ...field, options: field.options || ["Option 1"] }} onUpdate={onUpdate} />;
+        case "NUMBER":
           return (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
@@ -212,7 +147,7 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
               </div>
             </div>
           );
-        case "rating":
+        case "RATING":
           return (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -236,7 +171,7 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
               </div>
             </div>
           );
-        case "file":
+        case "FILE":
           return (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -256,7 +191,7 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
               </div>
             </div>
           );
-        case "date":
+        case "DATE":
           return (
             <div className="space-y-3">
               <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -269,7 +204,7 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
               </div>
             </div>
           );
-        case "time":
+        case "TIME":
           return (
             <div className="space-y-3">
               <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -321,12 +256,12 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
           <span className="text-sm text-gray-500">Question {index + 1}</span>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"
             onClick={onDuplicate}
-            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
             title="Duplicate question"
           >
             <Copy className="w-4 h-4" />
@@ -335,19 +270,37 @@ export function FormElement({ field, index, onUpdate, onDelete, onDuplicate, isD
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+            className="text-gray-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
             title="Delete question"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            title="More options"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                title="More options"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onDuplicate} className="cursor-pointer">
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-red-600">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

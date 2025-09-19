@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,141 +11,218 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String            @id @default(cuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean           @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  // Relations
   sessions      Session[]
   accounts      Account[]
   forms         Form[]
+  workspaces    WorkspaceMember[]
 
   @@unique([email])
-  @@map("user")
+  @@map("users")
+}
+
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  description String?
+  plan        Plan              @default(FREE)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  // Relations
+  members     WorkspaceMember[]
+  forms       Form[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+  // Relations
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
 }
 
 model Form {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title        String    @default("Untitled form")
-  description  String?   @default("Form description")
-  slug         String    @unique // for public URLs
-  
+  id            String          @id @default(cuid())
+  userId        String
+  workspaceId   String?
+  title         String          @default("Untitled form")
+  description   String?         @default("Form description")
+  slug          String          @unique
   // Form settings
-  isPublished  Boolean   @default(false)
-  isDraft      Boolean   @default(true)
-  
+  isPublished   Boolean         @default(false)
+  isDraft       Boolean         @default(true)
+  isArchived    Boolean         @default(false)
   // Form metadata
-  estimatedTime String?  @default("5-7 minutes")
-  theme        Json?     // Allows flexible theming (colors, fonts, etc.)
-  settings     Json?     // Form-level settings (notifications, etc.)
-  
+  estimatedTime String?         @default("5-7 minutes")
+  category      String?
+  tags          String[]
+  // Customization
+  theme         Json? // Colors, fonts, branding
+  settings      Json? // Notifications, redirects, etc.
+  // Analytics
+  viewCount     Int             @default(0)
+  responseCount Int             @default(0)
   // Timestamps
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
-  publishedAt  DateTime?
-  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  publishedAt   DateTime?
+  archivedAt    DateTime?
   // Relations
-  fields       Field[]
-  responses    Response[]
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace     Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  fields        Field[]
+  responses     Response[]
+  analytics     FormAnalytics[]
 
-  @@map("form")
+  @@map("forms")
 }
 
 model Field {
-  id       String    @id @default(cuid())
-  formId   String
-  form     Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  
-  // Basic field properties
-  question    String                    // The question text (renamed from label)
-  type        FieldType                 // Field type enum
-  required    Boolean   @default(false) // Required field flag
-  order       Int                       // Position in form (0, 1, 2...)
-  
-  // Field-specific properties
-  placeholder String?                   // For text inputs, dropdowns
-  options     Json?                     // Array of options for MCQ, checkbox, dropdown
-  
-  // Number field properties
-  min         Float?                    // Minimum value for number fields
-  max         Float?                    // Maximum value for number fields  
-  step        Float?                    // Step value for number fields
-  
-  // Text field properties
-  rows        Int?                      // Number of rows for textarea
-  
-  // File upload properties
-  acceptedTypes String?                 // Accepted file types (.pdf,.doc,etc)
-  maxFileSize   Int?                    // Max file size in bytes
-  
-  // Date/Time properties
-  minDate     String?                   // Minimum date (ISO string)
-  maxDate     String?                   // Maximum date (ISO string)
-  minTime     String?                   // Minimum time (HH:MM)
-  maxTime     String?                   // Maximum time (HH:MM)
-  
-  // Rating properties
-  maxRating   Int?      @default(5)     // Maximum rating (3-10)
-  
+  id            String    @id @default(cuid())
+  formId        String
+  question      String
+  type          FieldType
+  required      Boolean   @default(false)
+  order         Int
+  // Field configuration
+  placeholder   String?
+  description   String?
+  options       Json? // For choice fields
   // Validation rules
-  validation  Json?                     // Custom validation rules
-  
+  minLength     Int?
+  maxLength     Int?
+  min           Float?
+  max           Float?
+  step          Float?
+  pattern       String? // Regex pattern
+  // UI configuration
+  rows          Int? // For textarea
+  columns       Int? // For grid layouts
+  // File upload settings
+  acceptedTypes String?
+  maxFileSize   Int?
+  maxFiles      Int?
+  // Date/Time constraints
+  minDate       String?
+  maxDate       String?
+  minTime       String?
+  maxTime       String?
+  // Rating settings
+  maxRating     Int?      @default(5)
+  ratingStyle   String? // stars, numbers, emoji
+  // Advanced settings
+  conditional   Json? // Conditional logic
+  validation    Json? // Custom validation rules
   // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now()) @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  // Relations
+  form          Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  @@map("field")
+  @@map("fields")
 }
 
 model Response {
   id          String   @id @default(cuid())
   formId      String
-  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  
-  // Response data
-  data        Json     // Stores field responses as { fieldId: value }
-  
+  data        Json // Field responses
   // Submission metadata
-  submitterIp String?  // IP address of submitter
-  userAgent   String?  // Browser/device info
-  referrer    String?  // Where they came from
-  
+  submitterIp String?
+  userAgent   String?
+  referrer    String?
+  location    Json? // Geolocation data
+  // Status
+  isComplete  Boolean  @default(true)
+  isSpam      Boolean  @default(false)
   // Timestamps
   submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Relations
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
 
-  @@map("response")
+  @@map("responses")
 }
 
-// Enhanced field type enum matching your implementation
+model FormAnalytics {
+  id        String   @id @default(cuid())
+  formId    String
+  date      DateTime @db.Date
+  views     Int      @default(0)
+  starts    Int      @default(0)
+  completes Int      @default(0)
+  // Relations
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@unique([formId, date])
+  @@map("form_analytics")
+}
+
+// Enhanced enums
+
 enum FieldType {
   // Text inputs
-  TEXT         // Short answer text
-  EMAIL        // Email input with validation
-  PHONE        // Phone number input
-  
+  TEXT
+  EMAIL
+  PHONE
+  URL
+  PASSWORD
   // Long text
-  TEXTAREA     // Paragraph/long answer
-  
+  TEXTAREA
   // Choice fields
-  RADIO        // Multiple choice (single selection)
-  CHECKBOX     // Checkboxes (multiple selection)
-  SELECT       // Dropdown selection
-  
+  RADIO
+  CHECKBOX
+  SELECT
   // Numeric
-  NUMBER       // Number input
-  RATING       // Star rating
-  
+  NUMBER
+  RATING
+  SCALE
   // Date/Time
-  DATE         // Date picker
-  TIME         // Time picker
-  
+  DATE
+  TIME
+  DATETIME
   // File
-  FILE         // File upload
+  FILE
+  IMAGE
+  // Advanced
+  SIGNATURE
+  PAYMENT
+  LOCATION
+  @@map("field_types")
 }
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+  @@map("workspace_roles")
+}
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+  ENTERPRISE
+  @@map("plans")
+}
+
+// Auth models (unchanged)
 
 model Session {
   id        String   @id
@@ -190,7 +264,7 @@ model Verification {
   value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @updatedAt
 
-  @@map("verification")
+  @@map("verifications")
 }

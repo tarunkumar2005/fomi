@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db";
-import { FieldType } from "@prisma/client";
+import { FieldType, Prisma } from "@prisma/client";
 
 export const checkIfUserExists = async (email: string) => {
   const user = await prisma.user.findUnique({
@@ -68,7 +68,7 @@ export const createForm = async (userId: string, formData: FormData) => {
             required: field.required,
             order: index,
             placeholder: field.placeholder,
-            options: field.options ? JSON.stringify(field.options) : null,
+            options: field.options ? JSON.stringify(field.options) : Prisma.DbNull,
             rows: field.rows,
             min: field.min,
             max: field.max,
@@ -122,12 +122,11 @@ export const updateForm = async (formId: string, userId: string, formData: FormD
             required: field.required,
             order: index,
             placeholder: field.placeholder,
-            options: field.options ? JSON.stringify(field.options) : null,
+            options: field.options ? JSON.stringify(field.options) : Prisma.DbNull,
             rows: field.rows,
             min: field.min,
             max: field.max,
             step: field.step,
-            maxRating: field.type === "rating" ? (field.max || 5) : null,
           }))
         }
       },

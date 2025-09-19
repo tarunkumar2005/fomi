@@ -68,9 +68,12 @@ export function FormHeader({ formId, isSaving, lastSaved, onSave, onPreview }: F
                 Saving...
               </div>
             ) : lastSaved ? (
-              `Last saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              `Saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}`
             ) : (
-              "Not saved"
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                Auto-save enabled
+              </div>
             )}
           </div>
 
@@ -82,14 +85,14 @@ export function FormHeader({ formId, isSaving, lastSaved, onSave, onPreview }: F
             <Button 
               variant="outline" 
               size="sm" 
-              className="hover:bg-gray-50"
+              className="hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
               onClick={handlePreview}
             >
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
             
-            <Button variant="outline" size="sm" className="hover:bg-gray-50">
+            <Button variant="outline" size="sm" className="hover:bg-gray-50 hover:text-gray-900 cursor-pointer">
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
@@ -97,13 +100,13 @@ export function FormHeader({ formId, isSaving, lastSaved, onSave, onPreview }: F
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="w-4 h-4 mr-2" />
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
 
-            <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+            <Button variant="ghost" size="sm" className="hover:bg-gray-100 hover:text-gray-900 cursor-pointer">
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </div>
